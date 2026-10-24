@@ -1,0 +1,42 @@
+name,location,component,scope,type,default_or_notes,meaning,secret,safe_example,risk
+MCX_DOMAIN,custom_deployments/mcptt/services/mcxpy/mcx/config.py,mcxpy,deploy,string,mcx.hppcn.lab,DNS domain for all MC hostnames (cms/sip/idms FQDNs),no,mcx.hppcn.lab,High if wrong — breaks every URL the phone uses
+MCX_IDMS_REALM,config.py,idms,deploy,string,hppcn-mcx,Keycloak realm name for lab users,no,hppcn-mcx,Medium
+MCX_IDMS_URL,config.py,idms,deploy,url,https://idms.{DOMAIN}:8443,Base URL where the app obtains OAuth tokens,no,https://idms.mcx.hppcn.lab:8443,High
+MCX_CMS_ROOT,config.py,cms,deploy,url,https://cms.{DOMAIN}/xcap-root,XCAP root for user profiles (CMS),no,,High
+MCX_GMS_ROOT,config.py,gms,deploy,url,https://gms.{DOMAIN}/xcap-root,XCAP root for group documents (GMS),no,,High
+MCX_SIP_EDGE_URI,config.py,pcscf,deploy,uri,sips:sip.{DOMAIN}:5061,SIP URI the phone uses for REGISTER/INVITE — resolves to P-CSCF in this lab,no,,High
+MCX_CA_FILE,config.py,all-tls,deploy,path,/pki/ca.crt,Lab CA path inside containers; phones need the same CA installed,no,/pki/ca.crt,High if missing — TLS fails
+MCX_DB_PASSWORD,.mcptt_env,mcx-db,deploy,string,prepare.sh,Postgres password for MC directory,yes,,Critical
+MCX_IDMS_ADMIN_PASSWORD,.mcptt_env,mcx-idms,deploy,string,prepare.sh,Keycloak admin password,yes,,Critical
+MCX_AS_CLIENT_SECRET,.mcptt_env,as/idms,deploy,string,prepare.sh,OAuth client secret used by the application server,yes,,Critical
+MCX_SIM_CLIENT_SECRET,.mcptt_env,cms/idms,deploy,string,prepare.sh,OAuth client for SIM-based login exchange,yes,,Critical
+MCX_PW_ALICE,.mcptt_env,idms,deploy,string,prepare.sh,Lab password for user alice,yes,,High
+MCX_PW_BOB,.mcptt_env,idms,deploy,string,prepare.sh,Lab password for user bob,yes,,High
+MCX_ROLE,overlay env,mcxpy,runtime,enum,per service,Selects which module this container runs (admin/cms/as/media/…),no,admin,High if wrong — wrong service starts
+MCX_ADMIN_REQUIRE_AUTH,mcptt-overlay.yaml,mcx-admin,runtime,bool,0 in lab,Require bearer token for Admin API (0 = open on lab net),no,0,Medium — lab API is open
+MCX_ADMIN_HOST_PORT,overlay,mcx-admin,deploy,int,18444,Host port published for Control UI,no,18444,Low
+HPPCN_HUB_HOST_PORT,overlay,hppcn-hub,deploy,int,18100,Host port published for Hub portal,no,18100,Low
+HUB_USER,hub env,hppcn-hub,deploy,string,admin,Hub portal login username,no,admin,Medium
+HUB_PASSWORD,hub env,hppcn-hub,deploy,string,shared,Hub portal login password,yes,,Critical
+HUB_UP_MCPTT,hub env,hppcn-hub,deploy,url,https://MCX_ADMIN_IP:443,Upstream URL Hub proxies for MCPTT Control iframe,no,,High
+MCX_MEDIA_PORT_MIN,media_server.py,mcx-media,deploy,int,20000,Lowest UDP port in the media pool (must match TFT/firewall),no,20000,High vs packet filters
+MCX_MEDIA_PORT_MAX,media_server.py,mcx-media,deploy,int,20999,Highest UDP port in the media pool,no,20999,High vs packet filters
+MCX_VOICE_PORT_MIN,media_server.py,mcx-media,deploy,int,20000,Start of voice RTP/RTCP/floor sub-pool,no,20000,Medium
+MCX_VOICE_PORT_MAX,media_server.py,mcx-media,deploy,int,20499,End of voice sub-pool,no,20499,Medium
+MCX_VIDEO_PORT_MIN,media_server.py,mcx-media,deploy,int,20500,Start of video RTP/RTCP sub-pool,no,20500,Medium
+MCX_VIDEO_PORT_MAX,media_server.py,mcx-media,deploy,int,20999,End of video sub-pool,no,20999,Medium
+MCX_NO_NAT_IPV4,upf init / env,upf,deploy,cidr/flag,lab,Do not NAT UE MCPTT traffic — required for media return path,no,,Critical if off — one-way/no audio
+DOCKER_HOST_IP,.env / overlay,host,deploy,ip,192.168.1.51,Host IP advertised in Hub/Grafana browser URLs,no,192.168.1.51,Medium
+ICSI_MCPTT,config.py,as/client,build,urn,urn:urn-7:3gpp-service.ims.icsi.mcptt,IMS Communication Service Identifier for MCPTT,no,,Low
+CF_PSI,config.py,as,build,sip-uri,sip:mcptt-cf@{DOMAIN},Controlling-function public service identity,no,,High
+PF_PSI,config.py,as,build,sip-uri,sip:mcptt-pf@{DOMAIN},Participating-function public service identity,no,,High
+RTP_INACTIVITY_S,media_server.py const,mcx-media,runtime,float,6.0,Release floor if holder sends no RTP for this many seconds,no,6.0,Medium
+MCX_FD_MAX_BYTES,fd env,mcx-fd,deploy,int,optional,Max file-distribution upload size,no,,Low
+sim_bind,db mc_user,cms/admin,per-user,enum,bound|any,Whether login must match a bound IMSI,no,bound,High security
+allow_emergency_call,db mc_user,cms/as,per-user,bool,seed,User may start emergency group calls,no,true/false,High
+allow_imminent_peril_call,db mc_user,cms/as,per-user,bool,migration 07,User may start imminent peril (distinct from emergency),no,true/false,High
+allow_cancel_imminent_peril,db mc_user,cms/as,per-user,bool,migration 07,User may cancel imminent peril,no,true/false,High
+allow_imminent_peril,db mc_group,gms/as,per-group,bool,true,Group permits imminent peril sessions,no,true,High
+max_simultaneous_calls_n6,db mc_user,apk,per-user,int,3,How many simultaneous receive legs the client may keep,no,3,Medium
+multi_monitor_mode,db mc_user,apk,per-user,enum,off|soft|full,Multi-group audio monitoring behaviour,no,off,Medium
+implicit_affiliation,db mc_group_member,cms,per-member,bool,false,Auto-affiliate this member when profile loads (IA),no,false,Medium
